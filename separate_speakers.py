@@ -21,6 +21,13 @@ DEPENDENCIES = [
 MIN_PYTHON = (3, 8)
 
 
+def cpu_torchaudio_version(torch_version: str) -> str:
+    """Return the CPU-only torchaudio version matching the given torch version."""
+
+    base = torch_version.split("+")[0]
+    return f"{base}+cpu"
+
+
 def check_python_version() -> None:
     if sys.version_info < MIN_PYTHON:
         min_version = ".".join(str(part) for part in MIN_PYTHON)
@@ -142,12 +149,13 @@ def load_libraries():
         import torchaudio  # type: ignore
     except OSError as exc:  # pragma: no cover
         torch_version = getattr(torch, "__version__", "<torch version>")
+        ta_version = cpu_torchaudio_version(torch_version)
         raise RuntimeError(
             "torchaudio failed to load shared libraries. "
             "This often happens when a CUDA build is installed without the "
             "matching GPU libraries. Install the CPU-only torchaudio that "
             "matches your torch version, for example:\n"
-            f"  pip install --force-reinstall --no-cache-dir torchaudio=={torch_version}+cpu "
+            f"  pip install --force-reinstall --no-cache-dir torchaudio=={ta_version} "
             "-f https://download.pytorch.org/whl/torch_stable.html"
         ) from exc
 

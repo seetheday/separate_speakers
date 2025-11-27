@@ -61,13 +61,17 @@ The script logs key steps (audio loading, resampling decisions, model loading, s
 
 If torchaudio reports no working audio backend, install torchaudio with soundfile support (or ensure the `soundfile` package is available) so the script can set a usable backend automatically.
 
-If torchaudio fails to import with an error like `libtorch_cuda.so: cannot open shared object file`, it usually means a CUDA-enabled torchaudio wheel was installed without matching GPU libraries. Reinstall the CPU-only build that matches your Torch version, for example:
+If torchaudio fails to import with an error like `libtorch_cuda.so: cannot open shared object file`, it usually means a CUDA-enabled torchaudio wheel was installed without matching GPU libraries. Reinstall the CPU-only build that matches your Torch version (stripping any existing `+cuda` or `+cpu` suffix first), for example:
 
 ```bash
-pip install --force-reinstall --no-cache-dir torchaudio==$(python - <<'PY'
+TA_VERSION=$(python - <<'PY'
 import torch
-print(torch.__version__)
-PY)+cpu -f https://download.pytorch.org/whl/torch_stable.html
+base = torch.__version__.split('+')[0]
+print(f"{base}+cpu")
+PY
+)
+pip install --force-reinstall --no-cache-dir torchaudio==$TA_VERSION \
+  -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 If Hugging Face returns a 404 for `custom.py` when loading a SpeechBrain model, the script automatically supplies a local placeholder `custom.py` inside the `pretrained_sepformer/` cache directory so SepFormer can still initialize. Delete that folder if you want to force a fresh download after upgrading dependencies.
