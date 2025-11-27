@@ -211,7 +211,7 @@ def separate_sources(audio: "torch.Tensor", model_name: str) -> "torch.Tensor":
     except Exception as exc:  # pylint: disable=broad-except
         raise RuntimeError(f"Separation failed: {exc}") from exc
 
-    return est_sources
+    return validate_separated_output(est_sources)
 
 
 def save_sources(
@@ -225,6 +225,29 @@ def save_sources(
         output_path = output_dir / f"{basename}_speaker{i + 1}.wav"
         sf.write(str(output_path), source_audio, samplerate=sample_rate)
         print(f"Wrote: {output_path}")
+
+
+def validate_separated_output(est_sources: "torch.Tensor") -> "torch.Tensor":
+    """Ensure the separated output has a valid (batch, speakers, samples) shape.
+
+    SpeechBrain SepFormer should return a 3D tensor shaped
+    ``(batch, num_speakers, num_samples)``. If a 2D tensor is returned in the
+    shape ``(num_speakers, num_samples)``, add the missing batch dimension. Any
+    other shape is treated as an error to avoid writing thousands of files when
+    a time dimension is mistaken for the number of speakers.
+    """
+
+    if est_sources.ndim == 3 and est_sources.shape[1] <= 10:
+        return est_sources
+
+    if est_sources.ndim == 2 and est_sources.shape[0] <= 10:
+        print("Detected 2D separation output; assuming shape is (speakers, samples)")
+        return est_sources.unsqueeze(0)
+
+    raise RuntimeError(
+        "Unexpected separation output shape "
+        f"{tuple(est_sources.shape)}; expected (batch, speakers, samples)."
+    )
 
 
 def parse_args() -> argparse.Namespace:

@@ -63,6 +63,8 @@ If torchaudio reports no working audio backend, install torchaudio with soundfil
 
 If Hugging Face returns a 404 for `custom.py` when loading a SpeechBrain model, the script automatically supplies a local placeholder `custom.py` inside the `pretrained_sepformer/` cache directory so SepFormer can still initialize. Delete that folder if you want to force a fresh download after upgrading dependencies.
 
+The script validates the separated tensor shape before writing files; if SpeechBrain returns an unexpected shape, it raises a clear error instead of accidentally creating thousands of output files.
+
 ## Repository status
 
 This workspace currently has no Git remotes configured. If you need to verify merges with a GitHub repository, add the appropriate remote and fetch updates before comparing branches.
