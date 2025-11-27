@@ -137,7 +137,19 @@ def load_libraries():
     import numpy as np  # type: ignore
     import soundfile as sf  # type: ignore
     import torch  # type: ignore
-    import torchaudio  # type: ignore
+
+    try:
+        import torchaudio  # type: ignore
+    except OSError as exc:  # pragma: no cover
+        torch_version = getattr(torch, "__version__", "<torch version>")
+        raise RuntimeError(
+            "torchaudio failed to load shared libraries. "
+            "This often happens when a CUDA build is installed without the "
+            "matching GPU libraries. Install the CPU-only torchaudio that "
+            "matches your torch version, for example:\n"
+            f"  pip install --force-reinstall --no-cache-dir torchaudio=={torch_version}+cpu "
+            "-f https://download.pytorch.org/whl/torch_stable.html"
+        ) from exc
 
     if not hasattr(torchaudio, "list_audio_backends"):
         # Older torchaudio versions do not expose list_audio_backends. SpeechBrain
