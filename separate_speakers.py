@@ -42,6 +42,23 @@ def load_libraries():
     import numpy as np  # type: ignore
     import soundfile as sf  # type: ignore
     import torch  # type: ignore
+    import torchaudio  # type: ignore
+
+    if not hasattr(torchaudio, "list_audio_backends"):
+        # Older torchaudio versions do not expose list_audio_backends. SpeechBrain
+        # expects it to exist, so provide a minimal compatibility shim.
+        def _list_audio_backends() -> list[str]:  # type: ignore[override]
+            backends: list[str] = []
+            try:
+                current = torchaudio.get_audio_backend()
+                if current:
+                    backends.append(current)
+            except Exception:  # pragma: no cover  # pylint: disable=broad-except
+                pass
+            return backends
+
+        torchaudio.list_audio_backends = _list_audio_backends  # type: ignore[attr-defined]
+
     import torchaudio.functional as F  # type: ignore
     from speechbrain.inference.separation import (  # type: ignore
         SepformerSeparation,
