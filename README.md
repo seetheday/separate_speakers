@@ -61,6 +61,8 @@ The script logs key steps (audio loading, resampling decisions, model loading, s
 
 If torchaudio reports no working audio backend, install torchaudio with soundfile support (or ensure the `soundfile` package is available) so the script can set a usable backend automatically.
 
+If Hugging Face returns a 404 for `custom.py` when loading a SpeechBrain model, the script automatically supplies a local placeholder `custom.py` inside the `pretrained_sepformer/` cache directory so SepFormer can still initialize. Delete that folder if you want to force a fresh download after upgrading dependencies.
+
 ## Repository status
 
 This workspace currently has no Git remotes configured. If you need to verify merges with a GitHub repository, add the appropriate remote and fetch updates before comparing branches.

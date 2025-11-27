@@ -81,25 +81,52 @@ def configure_torchaudio_backend(torchaudio_module) -> None:
     )
 
 
-def patch_hf_hub_download() -> None:
-    """Allow SpeechBrain to call hf_hub_download(use_auth_token=...)."""
+def patch_hf_hub_download(savedir: Path) -> None:
+    """Allow SpeechBrain to call hf_hub_download(use_auth_token=...).
+
+    SpeechBrain attempts to download ``custom.py`` even when the model repo does
+    not provide it. Older hub versions also removed the ``use_auth_token``
+    parameter. This patch both restores the legacy argument and supplies a
+    placeholder ``custom.py`` when Hugging Face returns 404 so SepFormer can
+    load.
+    """
 
     try:
         import inspect
+        from requests import HTTPError
         import huggingface_hub  # type: ignore
     except ImportError:
         return
 
+    custom_placeholder = savedir / "custom.py"
+    if not custom_placeholder.exists():
+        savedir.mkdir(parents=True, exist_ok=True)
+        custom_placeholder.write_text(
+            "# Placeholder custom.py created by separate_speakers.py\n"
+        )
+
     original = huggingface_hub.hf_hub_download
     signature = inspect.signature(original)
-
-    if "use_auth_token" in signature.parameters:
-        return
 
     def _patched_hf_hub_download(*args, use_auth_token=None, **kwargs):  # type: ignore[override]
         if use_auth_token is not None and "token" not in kwargs:
             kwargs["token"] = use_auth_token
-        return original(*args, **kwargs)
+
+        try:
+            return original(*args, **kwargs)
+        except HTTPError as exc:  # pragma: no cover
+            filename = kwargs.get("filename")
+            if filename is None and len(args) >= 2:
+                filename = args[1]
+
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if filename == "custom.py" and status == 404:
+                print(
+                    "custom.py not found in the model repository; using a local"
+                    " placeholder instead."
+                )
+                return str(custom_placeholder)
+            raise
 
     huggingface_hub.hf_hub_download = _patched_hf_hub_download
 
@@ -129,7 +156,7 @@ def load_libraries():
 
     configure_torchaudio_backend(torchaudio)
 
-    patch_hf_hub_download()
+    patch_hf_hub_download(Path("pretrained_sepformer"))
 
     import torchaudio.functional as F  # type: ignore
     from speechbrain.inference.separation import (  # type: ignore
