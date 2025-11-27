@@ -21,6 +21,18 @@ DEPENDENCIES = [
 MIN_PYTHON = (3, 8)
 
 
+RECOMMENDED_MODELS = [
+    (
+        "speechbrain/sepformer-wsj02mix",
+        "Clean two-speaker separation trained on WSJ0-2mix (baseline).",
+    ),
+    (
+        "speechbrain/sepformer-whamr-enhancement",
+        "Two-speaker separation with dereverberation and denoising (WHAMR!).",
+    ),
+]
+
+
 def cpu_torchaudio_version(torch_version: str) -> str:
     """Return the CPU-only torchaudio version matching the given torch version."""
 
@@ -286,11 +298,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path("separated"), help="Output directory for separated WAVs")
     parser.add_argument("--model", type=str, default="speechbrain/sepformer-wsj02mix", help="SpeechBrain separation model identifier")
     parser.add_argument("--sample-rate", type=int, default=16000, help="Target sample rate for model input")
+    parser.add_argument(
+        "--list-models",
+        action="store_true",
+        help="List recommended SpeechBrain separation models and exit",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+
+    if args.list_models:
+        print("Recommended SpeechBrain separation models:")
+        for name, description in RECOMMENDED_MODELS:
+            print(f"- {name}: {description}")
+        sys.exit(0)
 
     try:
         check_python_version()

@@ -14,6 +14,13 @@ This repository provides a command-line script, `separate_speakers.py`, that run
   - `requests`
   - `huggingface_hub`
 
+If separation quality is poor on noisy or reverberant recordings, try a model that
+is trained for those conditions. Good starting points:
+
+- `speechbrain/sepformer-whamr-enhancement` — two-speaker separation with built-in
+  denoising and dereverberation (WHAMR!).
+- `speechbrain/sepformer-wsj02mix` — clean two-speaker separation baseline.
+
 ### Recommended: run inside a virtual environment
 
 Some systems (for example, Debian/Ubuntu with `python3-pip` installed from apt) protect the system Python environment and can raise an "externally-managed-environment" error if you try to install packages globally. To avoid this, create and activate a virtual environment before running the script:
@@ -45,6 +52,7 @@ Arguments:
 - `--output-dir` (optional): Directory where separated WAV files will be saved. Defaults to `separated`.
 - `--model` (optional): SpeechBrain separation model identifier to use. Defaults to `speechbrain/sepformer-wsj02mix` but accepts any compatible SpeechBrain separation model.
 - `--sample-rate` (optional): Target sample rate for model input. Defaults to `16000` Hz; input audio is resampled if necessary.
+- `--list-models` (optional): Print a curated list of recommended SpeechBrain separation models and exit.
 
 ### Output files
 
