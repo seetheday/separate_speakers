@@ -1,54 +1,15 @@
 import argparse
-import importlib.util
-import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    import torch  # pragma: no cover
-
-
-DEPENDENCIES = ["speechbrain", "torch", "torchaudio", "numpy", "soundfile"]
-MIN_PYTHON = (3, 8)
+import numpy as np
+import soundfile as sf
+import torch
+import torchaudio.functional as F
+from speechbrain.inference.separation import SepformerSeparation
 
 
-def check_python_version() -> None:
-    if sys.version_info < MIN_PYTHON:
-        min_version = ".".join(str(part) for part in MIN_PYTHON)
-        raise RuntimeError(
-            f"Python {min_version} or newer is required. Detected {sys.version.split()[0]}"
-        )
-
-
-def ensure_dependencies() -> None:
-    missing = [pkg for pkg in DEPENDENCIES if importlib.util.find_spec(pkg) is None]
-    if not missing:
-        return
-
-    print("Missing required packages: " + ", ".join(missing))
-    response = input("Install missing packages now? [y/N]: ").strip().lower()
-    if response not in {"y", "yes"}:
-        raise RuntimeError("Cannot continue without installing required packages.")
-
-    for pkg in missing:
-        print(f"Installing {pkg}...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
-
-
-def load_libraries():
-    global np, sf, torch, F, SepformerSeparation  # noqa: PLW0603
-
-    import numpy as np  # type: ignore
-    import soundfile as sf  # type: ignore
-    import torch  # type: ignore
-    import torchaudio.functional as F  # type: ignore
-    from speechbrain.inference.separation import (  # type: ignore
-        SepformerSeparation,
-    )
-
-
-def load_audio(path: Path, target_sample_rate: int) -> tuple["torch.Tensor", int]:
+def load_audio(path: Path, target_sample_rate: int) -> tuple[torch.Tensor, int]:
     print(f"Loading input audio: {path}")
     if not path.exists():
         raise FileNotFoundError(f"Input file does not exist: {path}")
@@ -81,7 +42,7 @@ def load_audio(path: Path, target_sample_rate: int) -> tuple["torch.Tensor", int
     return audio, sample_rate
 
 
-def separate_sources(audio: "torch.Tensor", model_name: str) -> "torch.Tensor":
+def separate_sources(audio: torch.Tensor, model_name: str) -> torch.Tensor:
     print(f"Loading model: {model_name}")
     try:
         model = SepformerSeparation.from_hparams(source=model_name, savedir="pretrained_sepformer")
@@ -98,9 +59,7 @@ def separate_sources(audio: "torch.Tensor", model_name: str) -> "torch.Tensor":
     return est_sources
 
 
-def save_sources(
-    est_sources: "torch.Tensor", output_dir: Path, basename: str, sample_rate: int
-) -> None:
+def save_sources(est_sources: torch.Tensor, output_dir: Path, basename: str, sample_rate: int) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     num_speakers = est_sources.shape[1]
@@ -122,14 +81,6 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-
-    try:
-        check_python_version()
-        ensure_dependencies()
-        load_libraries()
-    except (RuntimeError, subprocess.CalledProcessError) as exc:
-        print(exc)
-        sys.exit(1)
 
     try:
         audio, sample_rate = load_audio(args.input, args.sample_rate)

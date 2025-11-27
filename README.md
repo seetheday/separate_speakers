@@ -4,13 +4,15 @@ This repository provides a command-line script, `separate_speakers.py`, that run
 
 ## Requirements
 
-- Python 3.8+ is required.
-- The script checks for these Python packages at startup and offers to install any that are missing:
-  - `speechbrain`
-  - `torch`
-  - `torchaudio`
-  - `numpy`
-  - `soundfile`
+The script expects the following Python packages to be installed:
+
+- `speechbrain`
+- `torch`
+- `torchaudio`
+- `numpy`
+- `soundfile`
+
+No installation steps are included in the script; install these dependencies in your environment before running it.
 
 ## Usage
 
