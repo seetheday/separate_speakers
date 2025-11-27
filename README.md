@@ -12,6 +12,23 @@ This repository provides a command-line script, `separate_speakers.py`, that run
   - `numpy`
   - `soundfile`
 
+### Recommended: run inside a virtual environment
+
+Some systems (for example, Debian/Ubuntu with `python3-pip` installed from apt) protect the system Python environment and can raise an "externally-managed-environment" error if you try to install packages globally. To avoid this, create and activate a virtual environment before running the script:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install speechbrain torch torchaudio numpy soundfile
+```
+
+When you're done, deactivate the environment with:
+
+```bash
+deactivate
+```
+
 ## Usage
 
 Run the script directly with Python:
