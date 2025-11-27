@@ -4,15 +4,13 @@ This repository provides a command-line script, `separate_speakers.py`, that run
 
 ## Requirements
 
-The script expects the following Python packages to be installed:
-
-- `speechbrain`
-- `torch`
-- `torchaudio`
-- `numpy`
-- `soundfile`
-
-No installation steps are included in the script; install these dependencies in your environment before running it.
+- Python 3.8+ is required.
+- The script checks for these Python packages at startup and offers to install any that are missing:
+  - `speechbrain`
+  - `torch`
+  - `torchaudio`
+  - `numpy`
+  - `soundfile`
 
 ## Usage
 
@@ -41,3 +39,7 @@ For example, running `python separate_speakers.py overlap_23.wav` produces `over
 ### Status and errors
 
 The script logs key steps (audio loading, resampling decisions, model loading, separation start, and output paths). It exits with clear error messages if the input file is missing, the model fails to load, or separation encounters an issue.
+
+## Repository status
+
+This workspace currently has no Git remotes configured. If you need to verify merges with a GitHub repository, add the appropriate remote and fetch updates before comparing branches.
