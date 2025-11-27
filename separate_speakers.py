@@ -251,14 +251,24 @@ def validate_separated_output(est_sources: "torch.Tensor") -> "torch.Tensor":
     """Ensure the separated output has a valid (batch, speakers, samples) shape.
 
     SpeechBrain SepFormer should return a 3D tensor shaped
-    ``(batch, num_speakers, num_samples)``. If a 2D tensor is returned in the
-    shape ``(num_speakers, num_samples)``, add the missing batch dimension. Any
-    other shape is treated as an error to avoid writing thousands of files when
-    a time dimension is mistaken for the number of speakers.
+    ``(batch, num_speakers, num_samples)``. Some torchaudio/model combinations
+    may instead emit ``(batch, num_samples, num_speakers)``; if so, permute the
+    tensor to the expected ordering. If a 2D tensor is returned in the shape
+    ``(num_speakers, num_samples)``, add the missing batch dimension. Any other
+    shape is treated as an error to avoid writing thousands of files when a time
+    dimension is mistaken for the number of speakers.
     """
 
-    if est_sources.ndim == 3 and est_sources.shape[1] <= 10:
-        return est_sources
+    if est_sources.ndim == 3:
+        batch, dim1, dim2 = est_sources.shape
+        if dim1 <= 10:
+            return est_sources
+        if dim2 <= 10:
+            print(
+                "Detected separation output shaped (batch, samples, speakers); "
+                "permuting to (batch, speakers, samples)."
+            )
+            return est_sources.permute(0, 2, 1)
 
     if est_sources.ndim == 2 and est_sources.shape[0] <= 10:
         print("Detected 2D separation output; assuming shape is (speakers, samples)")
