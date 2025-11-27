@@ -16,6 +16,7 @@ DEPENDENCIES = [
     "numpy",
     "soundfile",
     "requests",
+    "huggingface_hub",
 ]
 MIN_PYTHON = (3, 8)
 
@@ -80,6 +81,29 @@ def configure_torchaudio_backend(torchaudio_module) -> None:
     )
 
 
+def patch_hf_hub_download() -> None:
+    """Allow SpeechBrain to call hf_hub_download(use_auth_token=...)."""
+
+    try:
+        import inspect
+        import huggingface_hub  # type: ignore
+    except ImportError:
+        return
+
+    original = huggingface_hub.hf_hub_download
+    signature = inspect.signature(original)
+
+    if "use_auth_token" in signature.parameters:
+        return
+
+    def _patched_hf_hub_download(*args, use_auth_token=None, **kwargs):  # type: ignore[override]
+        if use_auth_token is not None and "token" not in kwargs:
+            kwargs["token"] = use_auth_token
+        return original(*args, **kwargs)
+
+    huggingface_hub.hf_hub_download = _patched_hf_hub_download
+
+
 def load_libraries():
     global np, sf, torch, F, SepformerSeparation  # noqa: PLW0603
 
@@ -104,6 +128,8 @@ def load_libraries():
         torchaudio.list_audio_backends = _list_audio_backends  # type: ignore[attr-defined]
 
     configure_torchaudio_backend(torchaudio)
+
+    patch_hf_hub_download()
 
     import torchaudio.functional as F  # type: ignore
     from speechbrain.inference.separation import (  # type: ignore

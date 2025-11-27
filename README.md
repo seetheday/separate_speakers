@@ -12,6 +12,7 @@ This repository provides a command-line script, `separate_speakers.py`, that run
   - `numpy`
   - `soundfile`
   - `requests`
+  - `huggingface_hub`
 
 ### Recommended: run inside a virtual environment
 
@@ -21,7 +22,7 @@ Some systems (for example, Debian/Ubuntu with `python3-pip` installed from apt) 
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install speechbrain torch torchaudio numpy soundfile requests
+pip install speechbrain torch torchaudio numpy soundfile requests huggingface_hub
 ```
 
 When you're done, deactivate the environment with:
