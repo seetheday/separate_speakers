@@ -9,7 +9,14 @@ if TYPE_CHECKING:
     import torch  # pragma: no cover
 
 
-DEPENDENCIES = ["speechbrain", "torch", "torchaudio", "numpy", "soundfile"]
+DEPENDENCIES = [
+    "speechbrain",
+    "torch",
+    "torchaudio",
+    "numpy",
+    "soundfile",
+    "requests",
+]
 MIN_PYTHON = (3, 8)
 
 
@@ -36,6 +43,43 @@ def ensure_dependencies() -> None:
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
 
+def configure_torchaudio_backend(torchaudio_module) -> None:
+    """Ensure torchaudio has a usable backend and log choices."""
+
+    preferred_backend = "soundfile"
+    try:
+        current = torchaudio_module.get_audio_backend()
+    except Exception:  # pragma: no cover  # pylint: disable=broad-except
+        current = None
+
+    try:
+        available = torchaudio_module.list_audio_backends()
+    except Exception:  # pragma: no cover  # pylint: disable=broad-except
+        available = []
+
+    if current:
+        return
+
+    chosen = None
+    if preferred_backend in available:
+        chosen = preferred_backend
+    elif available:
+        chosen = available[0]
+
+    if chosen:
+        try:
+            torchaudio_module.set_audio_backend(chosen)
+            print(f"Using torchaudio backend: {chosen}")
+            return
+        except Exception:  # pragma: no cover  # pylint: disable=broad-except
+            pass
+
+    print(
+        "Warning: SpeechBrain could not find any working torchaudio backend. "
+        "Install torchaudio with soundfile support or set a backend explicitly."
+    )
+
+
 def load_libraries():
     global np, sf, torch, F, SepformerSeparation  # noqa: PLW0603
 
@@ -58,6 +102,8 @@ def load_libraries():
             return backends
 
         torchaudio.list_audio_backends = _list_audio_backends  # type: ignore[attr-defined]
+
+    configure_torchaudio_backend(torchaudio)
 
     import torchaudio.functional as F  # type: ignore
     from speechbrain.inference.separation import (  # type: ignore
